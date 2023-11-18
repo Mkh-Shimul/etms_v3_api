@@ -10,5 +10,6 @@ namespace ETMS_API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Bus> Buses { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
     }
 }
