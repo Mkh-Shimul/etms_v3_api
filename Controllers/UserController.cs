@@ -29,7 +29,6 @@ namespace ETMS_API.Controllers
 			{
 				var userList = await _context.Users.Where(u => u.IsActive).ToListAsync();
 				return Ok(userList);
-
 			}
 			catch
 			{
