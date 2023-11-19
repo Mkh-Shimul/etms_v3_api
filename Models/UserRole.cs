@@ -12,5 +12,9 @@ namespace ETMS_API.Models
         public DateTime? CreatedAt { get; set; }
         public int? UpdateAt { get; set; }
         public DateTime? UpdatedBy { get; set; }
-    }
+
+		// Navigation property
+		public ICollection<User> Users { get; set; }
+
+	}
 }
