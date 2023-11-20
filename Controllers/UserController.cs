@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using ETMS_API.Data;
 using ETMS_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace ETMS_API.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[Authorize]
 	public class UserController : ControllerBase
 	{
 		public static User user = new User();
@@ -27,7 +29,15 @@ namespace ETMS_API.Controllers
 		{
 			try
 			{
-				var userList = await _context.Users.Where(u => u.IsActive).ToListAsync();
+				var userList = await _context.Users
+					.Where(u => u.IsActive)
+					.Join(
+						_context.UserRoles,
+						u => u.UserRoleId,
+						ur => ur.Id,
+						(u, ur) => new { Id = u.Id, FullName = u.FullName, Email = u.Email, UserName = u.UserName, RoleName = ur.RoleName }
+					)
+					.ToListAsync();
 				return Ok(userList);
 			}
 			catch
@@ -50,7 +60,7 @@ namespace ETMS_API.Controllers
 				user.PasswordSalt = passwordSalt;
 				user.PasswordInPlainText = request.Password;
 				user.UserRoleId = request.UserRoleId;
-				user.IsActive = true;
+				user.IsActive = request.IsActive;
 				user.CreatedAt = DateTime.UtcNow;
 
 				_context.Add(user);
@@ -63,6 +73,35 @@ namespace ETMS_API.Controllers
 			}
 		}
 
+		[Route("{id}")]
+		[HttpGet]
+		public async Task<IActionResult> GetAsync(int id)
+		{
+			var user = await _context.Users.FindAsync(id);
+			if (user == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(user);
+		}
+
+		[HttpGet("GetAllUserRoles")]
+		public async Task<IActionResult> GetAllUserRoles()
+		{
+			try
+			{
+				var userRoleList = await _context.UserRoles
+					.Where(ur => ur.IsActive)
+					.Select(ur => new {Id = ur.Id,  RoleName = ur.RoleName})
+					.ToListAsync();
+				return Ok(userRoleList);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest();
+			}
+		}
 		private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
 		{
 			using (var hmac = new HMACSHA512())
@@ -71,5 +110,7 @@ namespace ETMS_API.Controllers
 				passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
 			}
 		}
+
+		
 	}
 }
