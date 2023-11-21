@@ -53,8 +53,6 @@ namespace ETMS_API.Controllers
         {
 			try
 			{
-				//SendEmailNotification(request.Email, request.FullName);
-
 				CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
 				user.FullName = request.FullName;
