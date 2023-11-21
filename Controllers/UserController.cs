@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -51,6 +53,8 @@ namespace ETMS_API.Controllers
         {
 			try
 			{
+				//SendEmailNotification(request.Email, request.FullName);
+
 				CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
 				user.FullName = request.FullName;
@@ -61,10 +65,15 @@ namespace ETMS_API.Controllers
 				user.PasswordInPlainText = request.Password;
 				user.UserRoleId = request.UserRoleId;
 				user.IsActive = request.IsActive;
+				user.CreateBy = 1;
 				user.CreatedAt = DateTime.UtcNow;
 
 				_context.Add(user);
 				await _context.SaveChangesAsync();
+
+				// Send email notification
+				SendEmailNotification(user.Email, user.FullName);
+
 				return Ok(user);
 			}
 			catch
@@ -77,13 +86,61 @@ namespace ETMS_API.Controllers
 		[HttpGet]
 		public async Task<IActionResult> GetAsync(int id)
 		{
-			var user = await _context.Users.FindAsync(id);
+			var user = await _context.Users.Where(u => u.Id == id)
+				.Select(u => new
+			{
+				u.Id, u.FullName, u.Email, u.UserName, u.UserRoleId, u.IsActive
+			}).FirstOrDefaultAsync();
 			if (user == null)
 			{
 				return NotFound();
 			}
 
 			return Ok(user);
+		}
+
+		[Route("{id}")]
+		[HttpPut]
+		public async Task<IActionResult> PutAsync(User user, int id)
+		{
+			var existUser = await _context.Users.FindAsync(id);
+			if (existUser == null)
+			{
+				return NotFound();
+			}
+
+			existUser.FullName = user.FullName;
+			existUser.Email = user.Email;
+			existUser.UserName = user.UserName;
+			existUser.IsActive = user.IsActive;
+			existUser.UserRoleId = user.UserRoleId;
+			existUser.UpdateBy = 1;
+			existUser.UpdatedAt = DateTime.UtcNow;
+
+			_context.Users.Update(existUser);
+
+			_context.SaveChanges();
+
+			return Ok();
+		}
+
+		[Route("{id}")]
+		[HttpDelete]
+		public async Task<IActionResult> Delete(int id)
+		{
+			var user = await _context.Users.FindAsync(id);
+
+			if (user == null)
+			{
+				return NotFound();
+			}
+
+			user.IsActive = false;
+			user.UpdatedAt = DateTime.UtcNow;
+			await _context.SaveChangesAsync();
+
+			return Ok();
+
 		}
 
 		[HttpGet("GetAllUserRoles")]
@@ -102,6 +159,10 @@ namespace ETMS_API.Controllers
 				return BadRequest();
 			}
 		}
+
+		#region Helper Functions
+
+		// Password Creation
 		private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
 		{
 			using (var hmac = new HMACSHA512())
@@ -111,6 +172,30 @@ namespace ETMS_API.Controllers
 			}
 		}
 
-		
+		// Email
+		private void SendEmailNotification(string toEmail, string fullName)
+		{
+			var smtpClient = new SmtpClient("smtp.ethereal.email")
+			{
+				Port = 587,
+				Credentials = new NetworkCredential("alexis.lebsack@ethereal.email", "JSYufrfw149aWgFgJC"),
+				EnableSsl = true,
+			};
+
+			var mailMessage = new MailMessage
+			{
+				From = new MailAddress("alexis.lebsack@ethereal.email"),
+				Subject = "User Created Successfully",
+				Body = $"Dear {fullName},\n\nYour account has been created successfully.",
+				IsBodyHtml = false,
+			};
+
+			mailMessage.To.Add(toEmail);
+
+			smtpClient.Send(mailMessage);
+		}
+		#endregion
+
+
 	}
 }
