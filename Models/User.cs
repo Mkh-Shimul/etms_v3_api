@@ -13,18 +13,18 @@ namespace ETMS_API.Models
         public string Email { get; set; } = string.Empty;
         [Required, StringLength(100)]
         public string UserName { get; set; } = string.Empty;
-		public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
+		public byte[]? PasswordHash { get; set; }
+        public byte[]? PasswordSalt { get; set; }
         public string PasswordInPlainText { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
         public int? CreateBy { get; set; } 
         public DateTime? CreatedAt { get; set; }
         public int? UpdateBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
-		public int UserRoleId { get; set; } // Foreign key
+		public int? UserRoleId { get; set; } // Foreign key
 
 
         [ForeignKey("UserRoleId")]
-        public UserRole UserRole { get; set; }  
+        public UserRole? UserRole { get; set; }  
 	}
 }
