@@ -8,5 +8,6 @@
 		public string Password { get; set; } = string.Empty;
 		public int UserRoleId { get; set; }
 		public bool IsActive { get; set; }
+		public bool IsEmployee { get; set; }
 	}
 }
