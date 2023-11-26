@@ -17,7 +17,7 @@ namespace ETMS_API.Controllers
 	[Authorize]
 	public class UserController : ControllerBase
 	{
-		public static User user = new User();
+		//public static User user = new User();
 		private readonly IConfiguration _config;
         private readonly DataContext _context;
         public UserController(IConfiguration config, DataContext context)
@@ -53,6 +53,8 @@ namespace ETMS_API.Controllers
         {
 			try
 			{
+				User user = new User();
+
 				CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
 				user.FullName = request.FullName;
@@ -62,7 +64,8 @@ namespace ETMS_API.Controllers
 				user.PasswordSalt = passwordSalt;
 				user.PasswordInPlainText = request.Password;
 				user.UserRoleId = request.UserRoleId;
-				user.IsActive = request.IsActive;
+				user.IsActive = true;
+				user.IsEmployee = request.IsEmployee;
 				user.CreateBy = 1;
 				user.CreatedAt = DateTime.UtcNow;
 
@@ -110,7 +113,8 @@ namespace ETMS_API.Controllers
 			existUser.FullName = user.FullName;
 			existUser.Email = user.Email;
 			existUser.UserName = user.UserName;
-			existUser.IsActive = user.IsActive;
+			existUser.IsEmployee = user.IsEmployee;
+			existUser.IsActive = true;
 			existUser.UserRoleId = user.UserRoleId;
 			existUser.UpdateBy = 1;
 			existUser.UpdatedAt = DateTime.UtcNow;
@@ -191,6 +195,25 @@ namespace ETMS_API.Controllers
 			mailMessage.To.Add(toEmail);
 
 			smtpClient.Send(mailMessage);
+		}
+
+		// Get User Role
+		[HttpGet("GetMenubyRoleId/{userRoleId}")]
+		public async Task<IActionResult> GetMenubyRoleId(int userRoleId)
+		{
+			try
+			{
+				var menuList = await _context.UserRoles
+							.Where(ur => ur.Id == userRoleId)
+							.SelectMany(ur => ur.Menus)
+							.Where(menu => menu.IsActive)
+							.ToListAsync();
+				return Ok(menuList);
+			}
+			catch(Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
 		}
 		#endregion
 
