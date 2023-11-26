@@ -16,5 +16,7 @@ namespace ETMS_API.Models
 		// Navigation property
 		public ICollection<User> Users { get; set; }
 
+        public ICollection<Menu>? Menus { get; set; }
+
 	}
 }
