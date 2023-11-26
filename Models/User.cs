@@ -17,6 +17,7 @@ namespace ETMS_API.Models
         public byte[]? PasswordSalt { get; set; }
         public string PasswordInPlainText { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+        public bool IsEmployee { get; set; } = false;
         public int? CreateBy { get; set; } 
         public DateTime? CreatedAt { get; set; }
         public int? UpdateBy { get; set; }
