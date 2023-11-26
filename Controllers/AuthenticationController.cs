@@ -99,8 +99,9 @@ namespace ETMS_API.Controllers
 		{
 			List<Claim> claims = new List<Claim>
 			{
-				new Claim("UserName", user.UserName),
 				new Claim("UserId", user.Id.ToString()),
+				new Claim("UserName", user.UserName),
+				new Claim("UserRole", user.UserRoleId.ToString())
 			};
 
 			var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
