@@ -4,6 +4,7 @@ using ETMS_API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ETMS_API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20231124140121_UserTblUpdtwithIsEmployeeColumn")]
+    partial class UserTblUpdtwithIsEmployeeColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,30 +117,6 @@ namespace ETMS_API.Migrations
                     b.ToTable("Employees");
                 });
 
-            modelBuilder.Entity("ETMS_API.Models.Menu", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MenuName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MenuUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Menus");
-                });
-
             modelBuilder.Entity("ETMS_API.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -230,21 +209,6 @@ namespace ETMS_API.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("MenuUserRole", b =>
-                {
-                    b.Property<int>("MenusId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserRolesId")
-                        .HasColumnType("int");
-
-                    b.HasKey("MenusId", "UserRolesId");
-
-                    b.HasIndex("UserRolesId");
-
-                    b.ToTable("MenuPermission", (string)null);
-                });
-
             modelBuilder.Entity("ETMS_API.Models.User", b =>
                 {
                     b.HasOne("ETMS_API.Models.UserRole", "UserRole")
@@ -253,21 +217,6 @@ namespace ETMS_API.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("UserRole");
-                });
-
-            modelBuilder.Entity("MenuUserRole", b =>
-                {
-                    b.HasOne("ETMS_API.Models.Menu", null)
-                        .WithMany()
-                        .HasForeignKey("MenusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ETMS_API.Models.UserRole", null)
-                        .WithMany()
-                        .HasForeignKey("UserRolesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("ETMS_API.Models.UserRole", b =>
