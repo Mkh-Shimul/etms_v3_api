@@ -1,9 +1,11 @@
 ﻿using ETMS_API.Data;
 using ETMS_API.Models;
+using ExcelDataReader;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace ETMS_API.Controllers
 {
@@ -32,16 +34,102 @@ namespace ETMS_API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> PostAsync(Employee employee)
+		public async Task<IActionResult> PostAsync([FromForm] IFormFile? file, [FromBody] Employee employee)
 		{
 			try
 			{
+				if(file != null && file.Length > 0)
+				{
+					#region Excel File store directly to the DB
+					using (var stream = file.OpenReadStream())
+					{
+						using (var reader = ExcelReaderFactory.CreateReader(stream))
+						{
+							do
+							{
+								bool isHeaderSkipped = false;
+								while (reader.Read())
+								{
+									if (!isHeaderSkipped)
+									{
+										isHeaderSkipped = true;
+										continue;
+									}
+
+									var emp = new Employee();
+									emp.FirstName = reader.GetValue(1).ToString();
+									emp.LastName = reader.GetValue(2).ToString();
+									emp.Email = reader.GetValue(3).ToString();
+									emp.Designation = Convert.ToInt32(reader.GetValue(4).ToString());
+									emp.Gender = Convert.ToInt32(reader.GetValue(5).ToString());
+
+									_dataContext.Add(emp);
+
+									await _dataContext.SaveChangesAsync();
+
+								}
+							} while (reader.NextResult());
+						}
+					}
+					#endregion
+
+					#region Excel File Upload and store in the DB
+					/*
+					var uploadFolder = $"{Directory.GetCurrentDirectory()}\\Uploads\\Excel";
+					if(!Directory.Exists(uploadFolder))
+					{
+						Directory.CreateDirectory(uploadFolder);
+					}
+
+					var filePath = Path.Combine(uploadFolder, file.FileName);
+					using (var stream = new FileStream(filePath, FileMode.Create))
+					{
+						await file.CopyToAsync(stream);
+					}
+
+					using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
+					{
+						using (var reader = ExcelReaderFactory.CreateReader(stream))
+						{
+							do
+							{
+								bool isHeaderSkipped = false;
+								while (reader.Read())
+								{
+									if (!isHeaderSkipped)
+									{
+										isHeaderSkipped = true;
+										continue;
+									}
+
+									var emp = new Employee();
+									emp.FirstName = reader.GetValue(1).ToString();
+									emp.LastName = reader.GetValue(2).ToString();
+									emp.Email = reader.GetValue(3).ToString();
+									emp.Designation = Convert.ToInt32(reader.GetValue(4).ToString());
+									emp.Gender = Convert.ToInt32(reader.GetValue(5).ToString());
+
+									_dataContext.Add(emp);
+
+									await _dataContext.SaveChangesAsync();
+
+								}
+							} while (reader.NextResult());
+						}
+					}
+					*/
+					#endregion
+					return Ok("Excel File Data Saved Succesfully");
+				} 
+				else
+				{
 					employee.IsActive = true;
 					employee.CreatedAt = DateTime.UtcNow;
 					_dataContext.Employees.Add(employee);
 					await _dataContext.SaveChangesAsync();
 
-					return Ok();
+					return Ok("Employee Created Successfully");
+				}	
 			} 
 			catch (Exception ex)
 			{
