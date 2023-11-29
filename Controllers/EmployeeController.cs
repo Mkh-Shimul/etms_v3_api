@@ -34,11 +34,90 @@ namespace ETMS_API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> PostAsync([FromForm] IFormFile? file, [FromBody] Employee employee)
+		public async Task<IActionResult> PostAsync([FromBody] Employee employee)
 		{
 			try
 			{
-				if(file != null && file.Length > 0)
+				if(ModelState.IsValid)
+				{
+					employee.IsActive = true;
+					employee.CreatedAt = DateTime.UtcNow;
+					_dataContext.Employees.Add(employee);
+					await _dataContext.SaveChangesAsync();
+
+					return Ok("Employee Created Successfully");
+					
+				} 
+				else
+				{
+					return NotFound();
+				}	
+			} 
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
+
+		[Route("{id}")]
+		[HttpGet]
+		public async Task<IActionResult> GetAsync(int id)
+		{
+			var emp = await _dataContext.Employees.FindAsync(id);
+			if (emp == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(emp);
+		}
+
+		[Route("{id}")]
+		[HttpPut]
+		public async Task<IActionResult> PutAsync(Employee employee, int id)
+		{
+			var existEmployee = await _dataContext.Employees.FindAsync(id);
+			if(existEmployee == null)
+			{
+				return NotFound();
+			}
+			existEmployee.FirstName = employee.FirstName;
+			existEmployee.LastName = employee.LastName;
+			existEmployee.Email = employee.Email;
+			existEmployee.Gender = employee.Gender;
+			existEmployee.Designation = employee.Designation;
+			existEmployee.IsActive = true;
+			existEmployee.UpdatedAt = DateTime.UtcNow;
+			_dataContext.Employees.Update(existEmployee);
+			await _dataContext.SaveChangesAsync();
+
+			return Ok();
+		}
+
+		[Route("{id}")]
+		[HttpDelete]
+		public async Task<IActionResult> DeleteAsync(int id)
+		{
+			var employee = await _dataContext.Employees.FindAsync(id);
+
+			if(employee == null)
+			{
+				return NotFound();
+			}
+
+			employee.IsActive = false;
+			employee.UpdatedAt = DateTime.UtcNow;
+			await _dataContext.SaveChangesAsync();
+			return Ok(employee);
+		}
+
+		#region Excel File Data Upload
+		[HttpPost("CreateEmployeeFromExcel")]
+		public async Task<IActionResult> CreateEmployeeFromExcel([FromForm] IFormFile file)
+		{
+			try
+			{
+				if (file != null && file.Length > 0)
 				{
 					#region Excel File store directly to the DB
 					using (var stream = file.OpenReadStream())
@@ -120,74 +199,18 @@ namespace ETMS_API.Controllers
 					*/
 					#endregion
 					return Ok("Excel File Data Saved Succesfully");
-				} 
+				}
 				else
 				{
-					employee.IsActive = true;
-					employee.CreatedAt = DateTime.UtcNow;
-					_dataContext.Employees.Add(employee);
-					await _dataContext.SaveChangesAsync();
-
-					return Ok("Employee Created Successfully");
-				}	
-			} 
+					return BadRequest("Something went wrong");
+				}
+			}
 			catch (Exception ex)
 			{
 				return BadRequest(ex.Message);
 			}
 		}
+		#endregion
 
-		[Route("{id}")]
-		[HttpGet]
-		public async Task<IActionResult> GetAsync(int id)
-		{
-			var emp = await _dataContext.Employees.FindAsync(id);
-			if (emp == null)
-			{
-				return NotFound();
-			}
-
-			return Ok(emp);
-		}
-
-		[Route("{id}")]
-		[HttpPut]
-		public async Task<IActionResult> PutAsync(Employee employee, int id)
-		{
-			var existEmployee = await _dataContext.Employees.FindAsync(id);
-			if(existEmployee == null)
-			{
-				return NotFound();
-			}
-			existEmployee.FirstName = employee.FirstName;
-			existEmployee.LastName = employee.LastName;
-			existEmployee.Email = employee.Email;
-			existEmployee.Gender = employee.Gender;
-			existEmployee.Designation = employee.Designation;
-			existEmployee.IsActive = true;
-			existEmployee.UpdatedAt = DateTime.UtcNow;
-			_dataContext.Employees.Update(existEmployee);
-			await _dataContext.SaveChangesAsync();
-
-			return Ok();
-		}
-
-		[Route("{id}")]
-		[HttpDelete]
-		public async Task<IActionResult> DeleteAsync(int id)
-		{
-			var employee = await _dataContext.Employees.FindAsync(id);
-
-			if(employee == null)
-			{
-				return NotFound();
-			}
-
-			employee.IsActive = false;
-			employee.UpdatedAt = DateTime.UtcNow;
-			await _dataContext.SaveChangesAsync();
-			return Ok(employee);
-		}
-		
-    }
+	}
 }
